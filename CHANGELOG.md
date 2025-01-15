@@ -2,6 +2,8 @@
 
 ## Unreleased Changes
 
+* Added support for the [`simple_endian`](https://docs.rs/simple_endian/latest/simple_endian/index.html) crate.
+
 ## 0.5.5 (2023-11-19)
 * Fixed `serde` feature not working in `no_std` contexts ([#16])
 

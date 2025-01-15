@@ -247,6 +247,29 @@ macro_rules! nonmax {
             }
         }
 
+        #[cfg(feature = "simple_endian")]
+        impl simple_endian::SpecificEndian<$nonmax> for $nonmax {
+            fn to_big_endian(&self) -> $nonmax {
+                // Safety self is not max and endianness does not change that
+                unsafe { $nonmax::new_unchecked(self.get().to_be()) }
+            }
+
+            fn to_little_endian(&self) -> $nonmax {
+                // Safety self is not max and endianness does not change that
+                unsafe { $nonmax::new_unchecked(self.get().to_le()) }
+            }
+
+            fn from_big_endian(&self) -> $nonmax {
+                // Safety self is not max and endianness does not change that
+                unsafe { $nonmax::new_unchecked($primitive::from_be(self.get())) }
+            }
+
+            fn from_little_endian(&self) -> $nonmax {
+                // Safety self is not max and endianness does not change that
+                unsafe { $nonmax::new_unchecked($primitive::from_le(self.get())) }
+            }
+        }
+
         #[cfg(test)]
         mod $primitive {
             use super::*;
@@ -337,6 +360,23 @@ macro_rules! nonmax {
                     let encoded: Vec<u8> = bincode::serialize(&nonmax_value).unwrap();
                     let decoded: $nonmax = bincode::deserialize(&encoded[..]).unwrap();
                     assert_eq!(nonmax_value, decoded);
+                }
+            }
+
+            #[test]
+            #[cfg(feature = "simple_endian")]
+            fn simple_endian() {
+                use simple_endian::{BigEndian, LittleEndian};
+
+                for &value in [0, 32, $primitive::MAX - 1].iter() {
+                    let little: LittleEndian<$nonmax> = $nonmax::new(value).unwrap().into();
+                    let big: BigEndian<$nonmax> = $nonmax::new(value).unwrap().into();
+
+                    assert_eq!(little.to_bits().get(), $primitive::to_le(value));
+                    assert_eq!(little.to_native().get(), value);
+
+                    assert_eq!(big.to_bits().get(), $primitive::to_be(value));
+                    assert_eq!(big.to_native().get(), value);
                 }
             }
         }
